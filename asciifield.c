@@ -23,6 +23,7 @@ struct screen
     size_t num_stars;
     int first;
 
+    int draw_ship;
     double ship_wobble_x, ship_wobble_y;
     double ship_off_x, ship_off_y;
 };
@@ -85,6 +86,7 @@ init(struct screen *s)
     s->m[i++] = 0;
 
     /* Ship parameters. Wobble speed is an angular velocity. */
+    s->draw_ship = 0;
     s->ship_wobble_x = 0.125 * 360 * DEG_2_RAD;
     s->ship_wobble_y = -0.165 * 360 * DEG_2_RAD;
     s->ship_off_x = 0;
@@ -319,8 +321,26 @@ main(int argc, char **argv)
     struct screen s;
     struct star *field = NULL, *p;
     struct timeval t0, t1, t2;
+    int opt;
 
     init(&s);
+
+    while ((opt = getopt(argc, argv, "es:n:")) != -1)
+    {
+        switch (opt)
+        {
+            case 'e':
+                s.draw_ship = 1;
+                break;
+            case 's':
+                s.speed = atof(optarg);
+                break;
+            case 'n':
+                s.num_stars = atoi(optarg);
+                break;
+        }
+    }
+
 
     /* Hide cursor and restore it when we're exiting. */
     printf("\033[?25l");
@@ -348,7 +368,7 @@ main(int argc, char **argv)
             draw(&s, p->v, v_p);
         }
 
-        if (argc == 2 && strncmp(argv[1], "-s", 2) == 0)
+        if (s.draw_ship)
             ship(&s);
 
         show(&s);
