@@ -22,6 +22,9 @@ struct screen
     double fps;
     size_t num_stars;
     int first;
+
+    double ship_wobble_x, ship_wobble_y;
+    double ship_off_x, ship_off_y;
 };
 
 struct star
@@ -81,7 +84,13 @@ init(struct screen *s)
     s->m[i++] = -(2 * s->n * s->f) / (s->f - s->n);
     s->m[i++] = 0;
 
-    /* Misc options. */
+    /* Ship parameters. Wobble speed is an angular velocity. */
+    s->ship_wobble_x = 0.125 * 360 * DEG_2_RAD;
+    s->ship_wobble_y = -0.165 * 360 * DEG_2_RAD;
+    s->ship_off_x = 0;
+    s->ship_off_y = 0;
+
+    /* Misc options. Speed is "units per second". */
     s->speed = 3;
     s->fps = 30;
     s->num_stars = 300;
@@ -251,26 +260,73 @@ cleanup_terminal(int dummy)
 }
 
 double
-calc_stepsize(struct screen *s, struct timeval *t1, struct timeval *t2)
+time_diff(struct timeval *t1, struct timeval *t2)
 {
-    double t1_s, t2_s, diff;
+    double t1_s, t2_s;
 
     t1_s = (double)t1->tv_sec + (double)t1->tv_usec / 1e6;
     t2_s = (double)t2->tv_sec + (double)t2->tv_usec / 1e6;
 
-    diff = t2_s - t1_s;
+    return t2_s - t1_s;
+}
 
-    return s->speed * diff;
+
+double
+calc_stepsize(struct screen *s, struct timeval *t1, struct timeval *t2)
+{
+    return s->speed * time_diff(t1, t2);
+}
+
+void
+ship(struct screen *s)
+{
+    /* That's a little enterprise. Bytes which are '#' will be
+     * transparent. */
+    const int ship_w = 21, ship_h = 7;
+    char *shipstr[] = {"##_######_-_######_##",
+                       "_|_|.---'---`---.|_|_",
+                       "\\-`.-.___O_O___.-.'-/",
+                       "####`.##`]-['##,'####",
+                       "######`.' _ `.'######",
+                       "#######| /_\\ |#######",
+                       "########`___'########"};
+    char pic;
+    int x0, y0, x, y, x_p, y_p;
+
+    x0 = (int)((s->width - ship_w) * 0.5);
+    y0 = (int)((s->height - ship_h) * 0.5);
+
+    for (y = 0; y < ship_h; y++)
+    {
+        for (x = 0; x < ship_w; x++)
+        {
+            pic = shipstr[y][x];
+            if (pic != '#')
+            {
+                x_p = x0 + x + (int)s->ship_off_x;
+                y_p = y0 + y + (int)s->ship_off_y;
+                if (x_p >= 0 && x_p < s->width && y_p >= 0 && y_p < s->height)
+                    s->fb[y_p * s->width + x_p] = pic;
+            }
+        }
+    }
+}
+
+void
+update_ship_offset(struct screen *s, struct timeval *t1, struct timeval *t2)
+{
+    s->ship_off_x = sin(s->ship_wobble_x * time_diff(t1, t2)) * 4;
+    s->ship_off_y = sin(s->ship_wobble_y * time_diff(t1, t2)) * 2;
 }
 
 int
-main()
+main(int argc, char **argv)
 {
     double v_p[4];
     double stepsize;
     struct screen s;
     struct star *field = NULL, *p;
-    struct timeval t1, t2;
+    struct timeval t0, t1, t2;
 
     init(&s);
 
@@ -281,6 +337,7 @@ main()
 	signal(SIGTERM, cleanup_terminal);
 
     gettimeofday(&t1, NULL);
+    t0 = t1;
 
     while (1)
     {
@@ -299,12 +356,16 @@ main()
             draw(&s, p->v, v_p);
         }
 
+        if (argc == 2 && strncmp(argv[1], "-s", 2) == 0)
+            ship(&s);
+
         show(&s);
 
         /* Depending on how much time has passed, calculate the required
          * step size to get the configured speed. */
         gettimeofday(&t2, NULL);
         stepsize = calc_stepsize(&s, &t1, &t2);
+        update_ship_offset(&s, &t0, &t2);
         t1 = t2;
 
         for (p = field; p != NULL; p = p->next)
