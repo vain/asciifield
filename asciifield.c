@@ -66,7 +66,7 @@ init(struct screen *s)
     /* Clipping planes, font aspect ratio, FOV 45 degree. */
     s->n = 0.1;
     s->f = 10;
-    s->aspect = 1;
+    s->aspect = 0.5;
     s->theta = 45 * DEG_2_RAD;
 
     /* Ship parameters. Wobble speed is an angular velocity. */
