@@ -57,7 +57,7 @@ init(struct screen *s)
     }
 
     /* Clipping planes, unused aspect ratio, FOV 45 degree. */
-    s->n = 1;
+    s->n = 0.1;
     s->f = 10;
     s->aspect = 1;
     s->theta = 45 * DEG_2_RAD;
@@ -91,7 +91,7 @@ init(struct screen *s)
     s->ship_off_y = 0;
 
     /* Misc options. Speed is "units per second". */
-    s->speed = 3;
+    s->speed = 4;
     s->fps = 30;
     s->num_stars = 300;
     s->first = 1;
@@ -108,10 +108,6 @@ draw(struct screen *s, double *v_orig, double *v)
 {
     double x_p, y_p, len2;
     char c;
-
-    /* Clipping. */
-    if (v[2] >= 0)
-        return;
 
     /* Set "character size" depending on distance to camera. */
     len2 = v_orig[0] * v_orig[0] + v_orig[1] * v_orig[1] + v_orig[2] * v_orig[2];
@@ -160,10 +156,6 @@ project(struct screen *s, double *v, double *v_p)
     v_p[0] /= v_p[3];
     v_p[1] /= v_p[3];
     v_p[2] /= v_p[3];
-
-    /* Divide by z. */
-    v_p[0] /= v_p[2];
-    v_p[1] /= v_p[2];
 }
 
 void
