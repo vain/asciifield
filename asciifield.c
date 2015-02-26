@@ -21,7 +21,7 @@ struct screen
 
     double speed;
     double fps;
-    size_t num_stars;
+    int num_stars;
     int first;
 
     int draw_ship;
@@ -229,7 +229,7 @@ void
 ensure_stars(struct screen *s, struct star **field)
 {
     struct star *p, *last = NULL;
-    size_t existing;
+    int existing;
 
     if (*field == NULL)
     {
