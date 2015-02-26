@@ -38,7 +38,6 @@ struct star
 void
 init(struct screen *s)
 {
-    int i;
     struct winsize w;
 
     if (isatty(STDOUT_FILENO))
@@ -64,11 +63,30 @@ init(struct screen *s)
         exit(EXIT_FAILURE);
     }
 
-    /* Clipping planes, unused aspect ratio, FOV 45 degree. */
+    /* Clipping planes, font aspect ratio, FOV 45 degree. */
     s->n = 0.1;
     s->f = 10;
     s->aspect = 1;
     s->theta = 45 * DEG_2_RAD;
+
+    /* Ship parameters. Wobble speed is an angular velocity. */
+    s->draw_ship = 0;
+    s->ship_wobble_x = 0.125 * 360 * DEG_2_RAD;
+    s->ship_wobble_y = -0.165 * 360 * DEG_2_RAD;
+    s->ship_off_x = 0;
+    s->ship_off_y = 0;
+
+    /* Misc options. Speed is "units per second". */
+    s->speed = 4;
+    s->fps = 30;
+    s->num_stars = 300;
+    s->first = 1;
+}
+
+void
+init_m(struct screen *s)
+{
+    int i;
 
     /* Initialize standard OpenGL-ish projection matrix. */
     i = 0;
@@ -91,19 +109,6 @@ init(struct screen *s)
     s->m[i++] = 0;
     s->m[i++] = -(2 * s->n * s->f) / (s->f - s->n);
     s->m[i++] = 0;
-
-    /* Ship parameters. Wobble speed is an angular velocity. */
-    s->draw_ship = 0;
-    s->ship_wobble_x = 0.125 * 360 * DEG_2_RAD;
-    s->ship_wobble_y = -0.165 * 360 * DEG_2_RAD;
-    s->ship_off_x = 0;
-    s->ship_off_y = 0;
-
-    /* Misc options. Speed is "units per second". */
-    s->speed = 4;
-    s->fps = 30;
-    s->num_stars = 300;
-    s->first = 1;
 }
 
 void
@@ -343,7 +348,7 @@ main(int argc, char **argv)
 
     init(&s);
 
-    while ((opt = getopt(argc, argv, "es:n:")) != -1)
+    while ((opt = getopt(argc, argv, "es:n:f:")) != -1)
     {
         switch (opt)
         {
@@ -356,8 +361,13 @@ main(int argc, char **argv)
             case 'n':
                 s.num_stars = atoi(optarg);
                 break;
+            case 'f':
+                s.aspect = atof(optarg);
+                break;
         }
     }
+
+    init_m(&s);
 
 
     /* Hide cursor and restore it when we're exiting. */
