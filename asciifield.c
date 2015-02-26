@@ -14,6 +14,7 @@ struct screen
 {
     int width, height;
     char *fb;
+    double *db;
 
     double m[16];
     double n, f, aspect, theta;
@@ -54,6 +55,12 @@ init(struct screen *s)
     if (s->fb == NULL)
     {
         fprintf(stderr, "malloc for fb failed\n");
+        exit(EXIT_FAILURE);
+    }
+    s->db = malloc(sizeof(double) * s->width * s->height);
+    if (s->db == NULL)
+    {
+        fprintf(stderr, "malloc for db failed\n");
         exit(EXIT_FAILURE);
     }
 
@@ -102,13 +109,17 @@ init(struct screen *s)
 void
 clear(struct screen *s)
 {
+    int i;
+
     memset(s->fb, ' ', s->width * s->height);
+    for (i = 0; i < s->width * s->height; i++)
+        s->db[i] = -1.0 / 0.0;
 }
 
 void
 draw(struct screen *s, double *v_orig, double *v)
 {
-    double x_p, y_p, len2;
+    double x_p, y_p, len2, depth;
     char c;
 
     /* Set "character size" depending on distance to camera. */
@@ -125,7 +136,14 @@ draw(struct screen *s, double *v_orig, double *v)
     y_p = (v[1] + 1) * 0.5 * s->height;
 
     if (x_p >= 0 && x_p < s->width && y_p >= 0 && y_p < s->height)
-        s->fb[(int)(y_p) * s->width + (int)(x_p)] = c;
+    {
+        depth = s->db[(int)(y_p) * s->width + (int)(x_p)];
+        if (depth < v[2])
+        {
+            s->fb[(int)(y_p) * s->width + (int)(x_p)] = c;
+            s->db[(int)(y_p) * s->width + (int)(x_p)] = v[2];
+        }
+    }
 }
 
 void
