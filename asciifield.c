@@ -17,7 +17,7 @@ struct screen
     double *db;
 
     double m[16];
-    double n, f, aspect, theta;
+    double n, f, font_aspect, proj_aspect, theta;
 
     double speed;
     double fps;
@@ -63,10 +63,10 @@ init(struct screen *s)
         exit(EXIT_FAILURE);
     }
 
-    /* Clipping planes, font aspect ratio, FOV 45 degree. */
+    /* Clipping planes, font aspect ratio (w / h), FOV 45 degree. */
     s->n = -0.1;
     s->f = -10;
-    s->aspect = 0.5;
+    s->font_aspect = 0.5;
     s->theta = 45 * DEG_2_RAD;
 
     /* Ship parameters. Wobble speed is an angular velocity. */
@@ -88,9 +88,13 @@ init_m(struct screen *s)
 {
     int i;
 
+    /* Actual screen aspect ratio is only w / h according to our PDF,
+     * but we also have to take the font aspect ratio into account. */
+    s->proj_aspect = (double)s->width / s->height * s->font_aspect;
+
     /* Initialize projection matrix according to our PDF. */
     i = 0;
-    s->m[i++] = 1.0 / tan(s->theta * 0.5) / s->aspect;
+    s->m[i++] = 1.0 / tan(s->theta * 0.5) / s->proj_aspect;
     s->m[i++] = 0;
     s->m[i++] = 0;
     s->m[i++] = 0;
@@ -189,7 +193,7 @@ project(struct screen *s, double *v, double *v_p)
 void
 random_star(struct screen *s, struct star *st, int initial)
 {
-    st->v[0] = (drand48() * 2 - 1) * 4 * s->aspect;
+    st->v[0] = (drand48() * 2 - 1) * 4 * s->proj_aspect;
     st->v[1] = (drand48() * 2 - 1) * 4;
     st->v[2] = initial ? -(drand48() * 9 + 1) : s->f;
     st->v[3] = 1;
@@ -365,7 +369,7 @@ main(int argc, char **argv)
                 s.num_stars = atoi(optarg);
                 break;
             case 'f':
-                s.aspect = atof(optarg);
+                s.font_aspect = atof(optarg);
                 break;
         }
     }
