@@ -6,4 +6,3 @@ all: asciifield
 
 clean:
 	rm -f asciifield
-
