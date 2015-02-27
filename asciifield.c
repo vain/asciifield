@@ -64,8 +64,8 @@ init(struct screen *s)
     }
 
     /* Clipping planes, font aspect ratio, FOV 45 degree. */
-    s->n = 0.1;
-    s->f = 10;
+    s->n = -0.1;
+    s->f = -10;
     s->aspect = 0.5;
     s->theta = 45 * DEG_2_RAD;
 
@@ -88,9 +88,9 @@ init_m(struct screen *s)
 {
     int i;
 
-    /* Initialize standard OpenGL-ish projection matrix. */
+    /* Initialize projection matrix according to our PDF. */
     i = 0;
-    s->m[i++] = 1.0 / tan(s->theta * 0.5 * s->aspect);
+    s->m[i++] = 1.0 / tan(s->theta * 0.5) / s->aspect;
     s->m[i++] = 0;
     s->m[i++] = 0;
     s->m[i++] = 0;
@@ -103,11 +103,11 @@ init_m(struct screen *s)
     s->m[i++] = 0;
     s->m[i++] = 0;
     s->m[i++] = (s->f + s->n) / (s->f - s->n);
-    s->m[i++] = -1;
+    s->m[i++] = 1;
 
     s->m[i++] = 0;
     s->m[i++] = 0;
-    s->m[i++] = -(2 * s->n * s->f) / (s->f - s->n);
+    s->m[i++] = (-2 * s->n * s->f) / (s->f - s->n);
     s->m[i++] = 0;
 }
 
@@ -118,7 +118,7 @@ clear(struct screen *s)
 
     memset(s->fb, ' ', s->width * s->height);
     for (i = 0; i < s->width * s->height; i++)
-        s->db[i] = -1.0 / 0.0;
+        s->db[i] = 1;
 }
 
 void
@@ -142,8 +142,10 @@ draw(struct screen *s, double *v_orig, double *v)
 
     if (x_p >= 0 && x_p < s->width && y_p >= 0 && y_p < s->height)
     {
+        /* Projected z values range from -1 (closest to n and screen)
+         * to 1 (closest to f). */
         depth = s->db[(int)(y_p) * s->width + (int)(x_p)];
-        if (depth < v[2])
+        if (v[2] < depth)
         {
             s->fb[(int)(y_p) * s->width + (int)(x_p)] = c;
             s->db[(int)(y_p) * s->width + (int)(x_p)] = v[2];
@@ -188,7 +190,7 @@ random_star(struct screen *s, struct star *st, int initial)
 {
     st->v[0] = (drand48() * 2 - 1) * 4;
     st->v[1] = (drand48() * 2 - 1) * 4;
-    st->v[2] = initial ? drand48() * 9 + 1 : s->f;
+    st->v[2] = initial ? -(drand48() * 9 + 1) : s->f;
     st->v[3] = 1;
     st->next = NULL;
 }
@@ -203,7 +205,7 @@ cleanup_stars(struct screen *s, struct star **field)
 
     for (p = *field; p != NULL; p = p->next)
     {
-        if (p->v[2] < s->n || p->v[2] > s->f)
+        if (p->v[2] > s->n || p->v[2] < s->f)
         {
             if (p == *field)
             {
@@ -409,7 +411,7 @@ main(int argc, char **argv)
         t1 = t2;
 
         for (p = field; p != NULL; p = p->next)
-            p->v[2] -= stepsize;
+            p->v[2] += stepsize;
 
         /* This is just an upper limit. If we're doing less fps, the
          * speed will remain the same. */
