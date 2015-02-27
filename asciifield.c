@@ -165,7 +165,7 @@ show(struct screen *s)
 
         /* Do not print a newline in the very last line to avoid
          * flickering. */
-        if (y + 1 < s->height - 1)
+        if (y < s->height - 1)
             printf("\n");
     }
 }
