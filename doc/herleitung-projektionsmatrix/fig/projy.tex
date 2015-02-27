@@ -1,0 +1,27 @@
+\begin{tikzpicture}
+	\draw[shift={(-1.5, -1.5)},<->]
+		(0, 0.5) node[above] {$y$}
+		-- (0, 0)
+		-- (-0.5, 0) node[left] {$z$};
+
+	\begin{scope}
+		\draw (0, 0) -- (7.5, 0);
+		\draw[thick] (0, 0) -- (7.5, 5);
+		\draw[thick] (0, 0) -- (7.5, -5);
+
+		\draw (3, 2) -- (3, -2);
+		\draw (6, 4) -- (6, -4);
+		\draw[dotted] (0, 0) -- (4.5, 1.5);
+		\draw[dotted] (4.5, 0) -- (4.5, 1.5);
+
+		\draw[fill=red] (0, 0) node[left] {$(0, 0)$} circle (2pt);
+		\draw[fill=red] (3, 0) node[below left] {$n$} circle (2pt);
+		\draw[fill=red] (6, 0) node[below left] {$f$} circle (2pt);
+
+		\draw[fill=red] (4.5, 1.5) circle (2pt);
+		\draw[fill=red] (3, 1) circle (2pt);
+		\draw[fill=red] (4.5, 1.5) node[above right] {$\bvec{p}$};
+		\draw[fill=red] (4.5, 0) node[below left] {$\bvec{p}_z$} circle (2pt);
+		\draw[fill=red] (3, 1) node[above right] {$\bvec{p}'$};
+	\end{scope}
+\end{tikzpicture}

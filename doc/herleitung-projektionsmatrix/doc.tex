@@ -1,0 +1,385 @@
+\documentclass[a4paper,parskip=full*]{scrartcl}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{lmodern}
+
+\usepackage{amsmath}            % Umgebungen wie align, ...
+\usepackage{amsfonts}           % beinhaltet z.B. Fraktur-Schrift
+\usepackage{amssymb}            % weitere Symbole
+
+\setlength{\jot}{12pt}          % Größerer Zeilenabstand in align
+
+\usepackage{tikz}
+
+\newcommand{\bvec}[1]{\ensuremath{\mathbf{#1}}}
+\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
+
+\begin{document}
+
+\begin{Huge}
+	\begin{center}
+		Herleitung der perspektivischen Projektionsmatrix
+	\end{center}
+\end{Huge}
+
+\begin{center}
+	-- Peter Hofmann, Februar 2015 --
+\end{center}
+
+\tableofcontents
+
+\section{Koordinatensystem, Blickrichtung, Objektpositionen}
+Wir verwenden ein rechtshändiges Koordinatensystem wie in
+Abbildung~\ref{coord}. Die Kamera wird im Ursprung platziert und
+blickt in \emph{negative} $z$-Richtung, damit die positive $x$-Richtung
+weiterhin nach "`rechts"' und positive $y$-Richtung nach "`oben"' zeigt.
+Objekte werden daher ebenfalls mit \emph{negativen} $z$-Koordinaten
+platziert.
+
+\begin{figure}[h]
+	\centering
+	\input{fig/coord.tex}
+	\caption%
+	{Rechtshändiges Koordinatensystem.}
+
+	\label{coord}
+\end{figure}
+
+\section{Herleitung der Projektionsmatrix mit Kegelstumpf}
+Wir wollen eine Zentralprojektion erreichen mit einem Fluchtpunkt.
+Ähnlich der Konventionen bei OpenGL verwenden wir dafür einen
+Kegelstumpf, den wir in einen Einheitswürfel transformieren.
+
+\subsection{Grundlegende Projektionsmatrix: Zentralprojektion}
+In $z$-Richtung wird dieser Kegelstumpf durch die beiden Werte $n$ und
+$f$ für "`near"' und "`far"' begrenzt. Beide Werte werden negativ sein
+und es gilt $n > f$ ($n$ ist also näher an der Null). Bei $n$ wird
+unsere Bildebene liegen. Alle Objekte werden in $z$-Richtung zwischen
+$n$ und $f$ erwartet. Ein Beispiel für diesen Aufbau ist in
+Abbildung~\ref{frustumz} zu sehen.
+
+\begin{figure}[h]
+	\centering
+	\input{fig/frustumz.tex}
+	\caption%
+	{Querschnitt des Kegelstumpfs mit $n$ und $f$.}
+
+	\label{frustumz}
+\end{figure}
+
+\begin{figure}[h]
+	\centering
+	\input{fig/projy.tex}
+	\caption%
+	{Gegebener Punkt $\bvec{p}$ und gesuchter Punkt $\bvec{p}'$.}
+
+	\label{projy}
+\end{figure}
+
+Wird nun ein Punkt $\bvec{p}$ projiziert, dann suchen wir den
+dazugehörigen Punkt $\bvec{p}'$, der sich durch die Zentralprojektion
+ergibt. In Abbildung~\ref{projy} kann man erkennen, dass sich hier der
+zweite Strahlensatz anwenden lässt:
+\begin{align*}
+	\frac{\bvec{p}_y}{\bvec{p}_z} &= \frac{\bvec{p}'_y}{n}  \\
+              \iff ~~ \bvec{p}'_y &= \bvec{p}_y \cdot \frac{n}{\bvec{p}_z}
+\end{align*}
+Für die nicht eingezeichnete $x$-Richtung gilt dasselbe:
+\begin{align*}
+	\frac{\bvec{p}_x}{\bvec{p}_z} &= \frac{\bvec{p}'_x}{n}  \\
+              \iff ~~ \bvec{p}'_x &= \bvec{p}_x \cdot \frac{n}{\bvec{p}_z}
+\end{align*}
+Daraus ergibt sich unter Verwendung von homogenen Koordinaten
+vorübergehend die Matrix $M_1$:
+\begin{align*}
+	M_1 &= 
+	\begin{pmatrix}
+		1 & 0 & 0 & 0  \\
+		0 & 1 & 0 & 0  \\
+		0 & 0 & 1 & 0  \\
+		0 & 0 & \frac{1}{n} & 0
+	\end{pmatrix}
+\end{align*}
+Beispielhafte Multiplikation:
+\begin{align*}
+	M_1 \cdot \begin{pmatrix} x \\ y \\ z \\ 1 \end{pmatrix} =
+	\begin{pmatrix} x \\ y \\ z \\ \frac{z}{n} \end{pmatrix} \cong
+	\begin{pmatrix} x \frac{n}{z} \\ y \frac{n}{z} \\ n \end{pmatrix}
+\end{align*}
+Wie gewünscht wurden $x$ und $y$ also jeweils mit dem Faktor
+$\frac{n}{z}$ multipliziert.
+
+\subsection{Transformation in den Einheitswürfel}
+\subsubsection{Definition des Bildbereichs}
+Bisher wurde lediglich eine Zentralprojektion erreicht. Das heißt, dass
+jeder Punkt im Raum auf unsere Bildebene projiziert werden kann. Eine
+Ebene ist unendlich groß, unser Bildschirm aber endlich. Daher wollen
+wir nun auf der Bildebene ein Rechteck für den tatsächlichen Bildbereich
+definieren. Erst dadurch entsteht auch tatsächlich ein Kegelstumpf.
+
+In $x$-Richtung wird der Bildbereich durch $l$ und $r$ für "`left"' und
+"`right"' beschränkt, in $y$-Richtung durch $b$ und $t$ für "`bottom"'
+und "`top"'.
+
+In den allermeisten Fällen wird dieses Rechteck im Ursprung zentriert
+sein. Wir betrachten jedoch zunächst den allgemeinen Fall. Für den
+genannten Sonderfall bietet sich ohnehin die Vereinfachung an, die im
+nächsten Abschnitt beschrieben wird.
+
+\begin{figure}[h]
+	\centering
+	\input{fig/lrtb.tex}
+	\caption%
+	{Bildbereich auf der Projektionsebene.}
+
+	\label{lrtb}
+\end{figure}
+
+\subsubsection{Bestimmung der Einträge für $x$ und $y$}
+Sei zur Steigerung der Lesbarkeit nun $y$ die $y$-Koordinate des
+Ausgangspunkts $\bvec{p}$ und $y'$ die $y$-Koordinate des auf die
+Bildebene projizierten Punkts $\bvec{p}'$. Wir möchten diejenigen Punkte
+in das Intervall $[-1, 1]$ überführen, die innerhalb des rechteckigen
+Bildbereichs liegen, also suchen wir das skalierte $y''$:
+\begin{align*}
+	y' \in [b, t]  ~~  \rightarrow  ~~  y'' \in [-1, 1]
+\end{align*}
+Wir wissen, dass es eine lineare Abbildung ist und dass $b$ auf $-1$
+abgebildet wird und $t$ auf $1$. Daher können wir das folgende LGS
+aufstellen:
+\begin{align*}
+	-1 &= \alpha \cdot b + \beta ~ , \numberthis\label{lgs1} \\
+	 1 &= \alpha \cdot t + \beta  \numberthis\label{lgs2}
+\end{align*}
+Aus \eqref{lgs2} folgt direkt:
+\begin{align*}
+	\beta &= 1 - \alpha \cdot t  \numberthis\label{lgs3}
+\end{align*}
+Setze \eqref{lgs3} in \eqref{lgs1} ein:
+\begin{align*}
+	-1 &= \alpha \cdot b + 1 - \alpha \cdot t  \\
+	   &= \alpha \cdot (b - t) + 1  \\
+	\Rightarrow ~~ \alpha &= \frac{-2}{b - t}  \numberthis\label{lgs4}
+\end{align*}
+Dann \eqref{lgs4} in \eqref{lgs3}:
+\begin{align*}
+	\beta &= 1 - \frac{-2}{b - t} \cdot t  \\
+	      &= \frac{b - t}{b - t} - \frac{-2 \cdot t}{b - t}  \\
+	      &= \frac{b - t + 2 \cdot t}{b - t}  \\
+	      &= \frac{b + t}{b - t}
+\end{align*}
+Das LGS ist gelöst und insgesamt ergibt sich:
+\begin{align*}
+	y'' = \frac{-2}{b - t} \cdot y' + \frac{b + t}{b - t}
+\end{align*}
+Der letzte Schritt ist, $y' = y \cdot \frac{n}{z}$ einzusetzen und die
+Gleichung dann in eine für die Matrix geeignete Form zu bringen. Das
+heißt, es muss eine Summe aus $x$, $y$ und $z$ sein, wobei diese Werte
+noch einfache Koeffizienten haben dürfen, und die Summe kann am Ende
+eventuell noch durch einen Wert geteilt werden (aufgrund der homogenen
+Koordinaten).\footnote{Es gibt hier häufig die Konvention, dass durch
+	$-z$ geteilt werden soll. Das machen wir an dieser Stelle
+\emph{nicht}.} Das ist Schritt für Schritt:
+\begin{align*}
+	y'' &= \frac{-2}{b - t} \cdot \left( y \cdot \frac{n}{z} \right) + \frac{b + t}{b - t}  \\
+	    &= \frac{-2}{b - t} \cdot y \cdot \frac{n}{z} + \frac{b + t}{b - t} \cdot \frac{z}{z}  \\
+	    &= \left( \frac{-2 \cdot n}{b - t} \cdot y \right) \cdot \frac{1}{z} + \left( \frac{b + t}{b - t} \cdot z \right) \cdot \frac{1}{z}  \\
+	    &= \left( \frac{-2 \cdot n}{b - t} \cdot y + \frac{b + t}{b - t} \cdot z \right) \cdot \frac{1}{z}  \numberthis\label{yscaled}
+\end{align*}
+Gleichung~\eqref{yscaled} genügt unseren Anforderungen.
+
+Dieser Prozess lässt sich analog auch für $x'$ beziehungsweise $x''$
+durchführen. Hier ist die Forderung:
+\begin{align*}
+	x' \in [l, r]  ~~  \rightarrow  ~~  x'' \in [-1, 1]
+\end{align*}
+Das Ergebnis ist genau dasselbe, nur $l$ statt $b$ und $r$ statt $t$.
+
+Damit ist unsere Matrix vorläufig diese:
+\begin{align*}
+	M_2 =
+	\begin{pmatrix}
+		\frac{-2n}{l - r} & 0 & \frac{l + r}{l - r} & 0  \\
+		0 & \frac{-2n}{b - t} & \frac{b + t}{b - t} & 0  \\
+		? & ? & ? & ?  \\
+		0 & 0 & 1 & 0
+	\end{pmatrix}
+\end{align*}
+
+\subsubsection{Bestimmung der Einträge für $z$}
+Die dritte Zeile ist bisher unbestimmt, weil wir uns noch nicht darum
+gekümmert haben, wie $z$ abgebildet werden soll. Das werden wir nun
+nachholen.
+
+$z$ wird nicht projiziert, also ist $z' = z$. Das einzige, was hier
+passieren soll, ist eine Transformation von $z' \in [n, f]$ nach $z''
+\in [-1, 1]$, damit wir in der Gesamtheit einen Einheitswürfel
+erreichen. Wir wissen, dass dafür weder $x$ noch $y$ relevant sind,
+also sind $m_{3,1} = m_{3,2} = 0$. Die beiden anderen Einträge sind noch
+offen.
+
+Betrachten wir noch einmal die Multiplikation mit einem homogenen
+Vektor und legen den Fokus auf das Endergebnis der $z$-Komponente nach
+Dehomogenisierung:
+\begin{align*}
+	M_2 \cdot \bvec{p} &=
+	\begin{pmatrix}
+		\dots & \dots & \dots & \dots  \\
+		\dots & \dots & \dots & \dots  \\
+		0 & 0 & \alpha & \beta  \\
+		0 & 0 & 1 & 0
+	\end{pmatrix}
+	\cdot
+	\begin{pmatrix}
+		\dots \\ \dots \\ z \\ 1
+	\end{pmatrix}, \\
+	\text{also ist:}  ~~  z'' &= \left( \alpha \cdot z + \beta \cdot 1 \right) \cdot \frac{1}{z}  \\
+	                          &= \alpha + \frac{\beta}{z}
+\end{align*}
+Wir gehen nun wie vorhin den Weg über ein LGS. Wir möchten $n$ auf $-1$
+abbilden und $f$ auf $1$. Also:
+\begin{align*}
+	-1 &= \alpha + \frac{\beta}{n} ~ , \numberthis\label{zlgs1}  \\
+	 1 &= \alpha + \frac{\beta}{f}  \numberthis\label{zlgs2}
+\end{align*}
+Aus \eqref{zlgs2} ergibt sich direkt:
+\begin{align*}
+	\alpha = 1 - \frac{\beta}{f}  \numberthis\label{zlgs3}
+\end{align*}
+Setze nun \eqref{zlgs3} in \eqref{zlgs1} ein:
+\begin{align*}
+	-1 &= 1 - \frac{\beta}{f} + \frac{\beta}{n}  \\
+	   &= 1 - \frac{n \cdot \beta}{n \cdot f} + \frac{f \cdot \beta}{f \cdot n}  \\
+	   &= 1 + \frac{\beta \cdot (f - n)}{n \cdot f}  \\
+	\iff ~~ -2 &= \beta \cdot \frac{f - n}{n \cdot f}  \\
+	\iff ~~ \beta &= \frac{-2 \cdot n \cdot f}{f - n}  \numberthis\label{zlgs4}
+\end{align*}
+Setze letztendlich \eqref{zlgs4} in \eqref{zlgs3} ein:
+\begin{align*}
+	\alpha &= 1 - \frac{2 \cdot n \cdot f}{f - n} \cdot \frac{1}{f}  \\
+	       &= 1 + \frac{2 \cdot n}{f - n}  \\
+	       &= \frac{f - n}{f - n} + \frac{2 \cdot n}{f - n}  \\
+	       &= \frac{f - n + 2 \cdot n}{f - n}  \\
+	       &= \frac{f + n}{f - n}
+\end{align*}
+Damit haben wir final $M_3$ bestimmt:
+\begin{align*}
+	M_3 &=
+	\begin{pmatrix}
+		\frac{-2n}{l - r} & 0 & \frac{l + r}{l - r} & 0  \\
+		0 & \frac{-2n}{b - t} & \frac{b + t}{b - t} & 0  \\
+		0 & 0 & \frac{f + n}{f - n} & \frac{-2nf}{f - n}  \\
+		0 & 0 & 1 & 0
+	\end{pmatrix}
+\end{align*}
+
+\section{Vereinfachung: Field of View $\vartheta$ und Aspect Ratio $a$}
+Sehr häufig genügt es, den Bildbereich in der Projektionsebene zu
+zentrieren. Damit blickt die Kamera genau entlang der negativen
+$z$-Achse, ebenso herrscht Symmetrie und es ist immer $b = -t$ und $l =
+-r$. Man muss die Kamera dann auch nicht mehr über $l$, $r$, $b$ und $t$
+parametrisieren, sondern kann einfach einen Öffnungswinkel $\vartheta$
+angeben. Möchte man keinen quadratischen Bildbereich, dann kann man das
+Seitenverhältnis $a$ zusätzlich angeben.
+
+$n$ und $f$ werden weiterhin angegeben.
+
+\subsection{Field of View $\vartheta$}
+Wir projizieren initial wie gehabt $y' = y \cdot \frac{n}{z}$. Da die
+Division zu einem anderen "`Zeitpunkt"' passiert als die Multiplikation
+mit $n$ (nämlich erst bei der Dehomogenisierung und nicht direkt als
+Koeffizient für $y$), schreiben wir explizit:
+\begin{align*}
+	y' &= \left( y \cdot n \right) \cdot \frac{1}{z}
+\end{align*}
+Dann betrachten wir Abbildung~\ref{fovy}: $t$ ist nicht gegeben, wir
+können es aber über den Öffnungswinkel bestimmen. Relevant ist dazu nur
+das obere Dreieck mit dem eingezeichneten rechten Winkel.
+
+\begin{figure}[h]
+	\centering
+	\input{fig/fovy.tex}
+	\caption%
+	{Kamera mit $n$ und Öffnungswinkel $\vartheta$. Die zweite Ebene bei
+	$f$ befindet sich weiterhin rechts von $n$ und ist nicht
+	eingezeichnet.}
+
+	\label{fovy}
+\end{figure}
+
+In diesem Dreieck gilt:
+\begin{align*}
+	\tan \frac{\vartheta}{2} &= \frac{t}{n}  \\
+	\Rightarrow ~~ t &= n \cdot \tan \frac{\vartheta}{2}
+\end{align*}
+Ähnlich wie bei der allgemeinen Projektion haben wir damit die
+Forderung:
+\begin{align*}
+	y' \in [-n \cdot \tan \frac{\vartheta}{2}, n \cdot \tan \frac{\vartheta}{2}]  ~~  \rightarrow  ~~  y'' \in [-1, 1]
+\end{align*}
+Wir können jetzt ausnutzen, dass der Bildbereich symmetrisch ist.
+Dadurch müssen wir lediglich durch die Intervallgrenzen dividieren.
+Also:
+\begin{align*}
+	y'' &= y' \cdot \frac{1}{n \cdot \tan \frac{\vartheta}{2}}  \\
+	    &= y \cdot n \cdot \frac{1}{n \cdot \tan \frac{\vartheta}{2}} \cdot \frac{1}{z}  \\
+	    &= y \cdot \frac{1}{\tan \frac{\vartheta}{2}} \cdot \frac{1}{z}
+\end{align*}
+Man beachte, dass dies ein reiner Koeffizient für $y$ ist und nichts
+addiert wird. Das wird die Matrix weiter vereinfachen.
+
+\subsection{Aspect Ratio $a$}
+Die $x$-Richtung lässt sich prinzipiell analog zur $y$-Richtung
+bestimmen. Unter Umständen will man aber keinen quadratischen
+Bildbereich darstellen. Es genügt hier, das Seitenverhältnis von Breite
+zu Höhe zu betrachten:
+\begin{align*}
+	a = \frac{w}{h}
+\end{align*}
+Um zu einem rechteckigen Bildbereich zu gelangen, werden wir $y''$ nicht
+weiter ändern, sondern nur $x''$. Das heißt, der Öffnungswinkel
+$\vartheta$ steuert nur die Öffnung der Kamera in $y$-Richtung,
+wohingegen der Winkel in $x$-Richtung größer oder kleiner sein kann.
+
+Wie verwerten wir nun $a$? Ganz anschaulich: Wir befinden uns mit einem
+positiven $x'' = k \cdot r$ irgendwo auf der Strecke von $0$ bis $r$
+oder darüberhinaus.\footnote{$r$ sei wie $t$ bestimmt und hat auch
+denselben Wert.} Für $y$ ist klar, dass bei $k = 1$ das Ende des
+Bildbereichs erreicht ist. Ist der Bildbereich nun aber beispielsweise
+doppelt so breit wie hoch, dann kann $x''$ auch doppelt so weit laufen.
+Um es auch in den Bereich $[-1, 1]$ zu skalieren, muss demnach durch $a$
+dividiert werden.
+
+\subsection{Endergebnis der vereinfachten Projektionsmatrix}
+$x$ und $y$ haben wir wie eben dargestellt abgeändert, $z$ bleibt
+gleich, ebenso wie die letzte Zeile der Matrix. Damit ergibt sich
+insgesamt:
+\begin{align*}
+	M_4 &=
+	\begin{pmatrix}
+		\frac{1}{\tan \frac{\vartheta}{2}} \frac{1}{a} & 0 & 0 & 0  \\
+		0 & \frac{1}{\tan \frac{\vartheta}{2}} & 0 & 0  \\
+		0 & 0 & \frac{f + n}{f - n} & \frac{-2nf}{f - n}  \\
+		0 & 0 & 1 & 0
+	\end{pmatrix}
+\end{align*}
+
+\section{Hintergrund: Warum spielt $z''$ nach der Projektion überhaupt
+eine Rolle?}
+Hätte man einzig und alleine eine Matrix für die Kamera, dann wäre $z''$
+nicht weiter wichtig. Man könnte damit sogar immer noch einen Depth
+Buffer umsetzen, indem man sich die $z$-Koordinaten der projizierten
+Punkte ansieht. In der Regel gibt es jedoch neben der Kameramatrix noch
+viele weitere Transformationsmatrizen. Diese Matrizen werden in der
+Regel auch nicht einzeln gespeichert, sondern miteinander multipliziert,
+um eine gemeinsame Matrix zu erhalten, mit der alle Punkte multipliziert
+werden können -- für die Umrechnung eines Punktes von Weltkoordinaten in
+Bildkoordinaten bedarf es dann nur einer einzigen
+Matrix-Vektor-Multiplikation. In dieser Matrix ist auch die
+Kameramatrix impliziert enthalten. Um jetzt noch einen Depth Buffer
+umsetzen zu können, muss das final projizierte $z''$ noch Aussagekraft
+besitzen können: Wo in $z$-Richtung lag der projizierte Punkt
+ursprünglich?
+
+\end{document}
