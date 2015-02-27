@@ -188,7 +188,7 @@ project(struct screen *s, double *v, double *v_p)
 void
 random_star(struct screen *s, struct star *st, int initial)
 {
-    st->v[0] = (drand48() * 2 - 1) * 4;
+    st->v[0] = (drand48() * 2 - 1) * 4 * s->aspect;
     st->v[1] = (drand48() * 2 - 1) * 4;
     st->v[2] = initial ? -(drand48() * 9 + 1) : s->f;
     st->v[3] = 1;
