@@ -124,7 +124,8 @@ clear(struct screen *s)
 void
 draw(struct screen *s, double *v_orig, double *v)
 {
-    double x_p, y_p, len2, depth;
+    int x_p, y_p;
+    double len2, depth;
     char c;
 
     /* Set "character size" depending on distance to camera. */
@@ -144,11 +145,11 @@ draw(struct screen *s, double *v_orig, double *v)
     {
         /* Projected z values range from -1 (closest to n and screen)
          * to 1 (closest to f). */
-        depth = s->db[(int)(y_p) * s->width + (int)(x_p)];
+        depth = s->db[y_p * s->width + x_p];
         if (v[2] < depth)
         {
-            s->fb[(int)(y_p) * s->width + (int)(x_p)] = c;
-            s->db[(int)(y_p) * s->width + (int)(x_p)] = v[2];
+            s->fb[y_p * s->width + x_p] = c;
+            s->db[y_p * s->width + x_p] = v[2];
         }
     }
 }
