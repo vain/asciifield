@@ -272,10 +272,10 @@ ensure_stars(struct screen *s, struct star **field)
 void
 cleanup_terminal(int dummy)
 {
-	(void)dummy;
+    (void)dummy;
 
-	printf("\e[?12l\e[?25h");
-	exit(EXIT_SUCCESS);
+    printf("\e[?12l\e[?25h");
+    exit(EXIT_SUCCESS);
 }
 
 double
@@ -371,12 +371,11 @@ main(int argc, char **argv)
 
     init_m(&s);
 
-
     /* Hide cursor and restore it when we're exiting. */
     printf("\033[?25l");
-	signal(SIGINT, cleanup_terminal);
-	signal(SIGHUP, cleanup_terminal);
-	signal(SIGTERM, cleanup_terminal);
+    signal(SIGINT, cleanup_terminal);
+    signal(SIGHUP, cleanup_terminal);
+    signal(SIGTERM, cleanup_terminal);
 
     gettimeofday(&t1, NULL);
     t0 = t1;
