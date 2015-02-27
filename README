@@ -1,0 +1,18 @@
+Having a little bit of fun.
+
+This program renders a starfield, much like the good old screensaver.
+
+
+Options:
+
+    -e
+        Draw a little ship.
+
+    -n n
+        Draw n stars. Default is 300.
+
+    -s n
+        Set speed. Default is 4.
+
+    -f a
+        Set font aspect ratio (width / height). Defaults to 0.5.
