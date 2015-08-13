@@ -1,18 +1,34 @@
-Having a little bit of fun.
-
-This program renders a starfield, much like the good old screensaver.
+asciifield(1)                User Commands               asciifield(1)
 
 
-Options:
 
-    -e
-        Draw a little ship.
+NAME
+       asciifield - ASCII starfield
 
-    -n n
-        Draw n stars. Default is 300.
+SYNOPSIS
+       asciifield [-e] [-n n] [-s n] [-f a]
 
-    -s n
-        Set speed. Default is 4.
+DESCRIPTION
+       This  program  renders  a  starfield,  much  like  the good old
+       screensaver.
 
-    -f a
-        Set font aspect ratio (width / height). Defaults to 0.5.
+OPTIONS
+       -e     Draw a little ship.
+
+       -n n   Draw n stars. Default is 300.
+
+       -s n   Set speed. Default is 4.
+
+       -f a   Set font aspect ratio (width / height). Defaults to 0.5.
+
+LICENSE
+       asciifield is released as “PIZZA-WARE”.  See  the  accompanying
+       LICENSE file.
+
+HISTORY
+       asciifield was originally written by Peter Hofmann. The project
+       was started in February 2015.
+
+
+
+asciifield                    2015-08-13                 asciifield(1)
