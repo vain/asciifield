@@ -1,34 +1,27 @@
-asciifield(1)                User Commands               asciifield(1)
+                               ==========
+                               asciifield
+                               ==========
 
 
-
-NAME
-       asciifield - ASCII starfield
-
-SYNOPSIS
-       asciifield [-e] [-n n] [-s n] [-f a]
-
-DESCRIPTION
-       This  program  renders  a  starfield,  much  like  the good old
-       screensaver.
-
-OPTIONS
-       -e     Draw a little ship.
-
-       -n n   Draw n stars. Default is 300.
-
-       -s n   Set speed. Default is 4.
-
-       -f a   Set font aspect ratio (width / height). Defaults to 0.5.
-
-LICENSE
-       asciifield is released as “PIZZA-WARE”.  See  the  accompanying
-       LICENSE file.
-
-HISTORY
-       asciifield was originally written by Peter Hofmann. The project
-       was started in February 2015.
+asciifield renders a starfield in your terminal, much like the good old
+screensaver.
 
 
+Installation
+------------
 
-asciifield                    2015-08-13                 asciifield(1)
+There are no dependencies except for a POSIX-ish operating system. To
+build the program and install it to /usr/local:
+
+    $ make
+    # make install
+
+
+Running
+-------
+
+You run the program on a VT220-ish text terminal:
+
+    $ asciifield
+
+Refer to the manpage for all options.
