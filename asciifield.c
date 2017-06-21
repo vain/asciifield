@@ -246,7 +246,7 @@ ensure_stars(struct screen *s, struct star **field)
     if (*field == NULL)
     {
         /* Create an initial list element if there is none yet. */
-        srand48(time(0));
+        srand48(time(NULL));
         *field = malloc(sizeof(struct star));
         random_star(s, *field, s->first);
     }
